@@ -1,0 +1,62 @@
+# ========================
+# Base build stage
+# ========================
+FROM python:3.13-slim AS base
+
+# Python tweaks
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=on
+
+# Install build/runtime dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        libcairo2-dev \
+        libpq-dev \
+        libffi-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# ========================
+# Build stage
+# ========================
+FROM base AS build
+
+# Create Python virtual environment
+RUN python -m venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Copy requirements and install
+COPY requirements-*.txt ./
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements-base.txt -r requirements-dev.txt -r requirements-prod.txt
+
+# Copy application code
+COPY hello_world_project ./hello_world_project
+COPY manage.py ./
+
+# ========================
+# Runtime stage
+# ========================
+FROM gcr.io/distroless/python3:latest AS runtime
+
+WORKDIR /app
+
+# Non-root user
+USER nonroot:nonroot
+
+# Copy virtualenv and app from build stage
+COPY --from=build /app/.venv /app/.venv
+COPY --from=build /app/hello_world_project ./hello_world_project
+COPY --from=build /app/manage.py ./
+
+# Set PATH to the virtualenv
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+EXPOSE 8000
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

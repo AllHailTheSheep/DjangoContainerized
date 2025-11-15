@@ -1,0 +1,19 @@
+# Naive Dockerfile — everything in one stage
+# Force this image to use debian 12.12 like the latest distroless container in the multistage (for better comparison)
+FROM python:3.13.9-slim-bookworm
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements
+COPY requirements-*.txt ./
+
+# Install dependencies
+RUN pip install -r requirements-base.txt -r requirements-dev.txt -r requirements-prod.txt
+
+# Copy app source code
+COPY . .
+
+# Expose port and set entrypoint
+EXPOSE 8000
+CMD ["gunicorn", "myproject.wsgi:application", "--bind", "0.0.0.0:8000"]

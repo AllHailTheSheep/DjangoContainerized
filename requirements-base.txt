@@ -1,0 +1,8 @@
+# Core Django app runtime
+Django>=5.0,<6.0
+
+# Database drivers (pure Python for minimal complications)
+psycopg[binary]>=3.1
+
+# For static file compression in both envs if needed
+pillow>=10.0

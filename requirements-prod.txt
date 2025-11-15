@@ -1,0 +1,13 @@
+-r requirements-base.txt
+
+# Production server (fast & reliable)
+gunicorn>=23.0
+
+# Static file serving
+whitenoise>=6.7
+
+# Security hardening (optional but recommended)
+django-environ>=0.11
+
+# Optional: database connection pooling
+psycopg_pool>=3.2
