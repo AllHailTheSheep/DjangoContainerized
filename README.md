@@ -1,7 +1,7 @@
 Dockerfile.naive contains an all-in-one image, not sutiable for production.
 Dockerfile.multistage contains a base, build, and a distroless runtime image.
 
-This slims our output down from 392MB for the naive build to 236MB for the multistage build, a ~40% reduction in attack surface. This is reflected by scanning the images with `trivy`.
+This slims our output down from 392MB for the naive build to 139MB for the multistage build, a ~65% reduction in attack surface. This is reflected by scanning the images with `trivy`.
 
 For our naive build:
 ```
