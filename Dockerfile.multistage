@@ -39,24 +39,34 @@ COPY hello_world_project ./hello_world_project
 COPY manage.py ./
 
 # ========================
+# Prod-only venv stage
+# ========================
+FROM python:3.13-slim AS prod-venv
+WORKDIR /app
+
+# Copy only prod requirements (base as well, as prod reqs references that)
+COPY requirements-base.txt ./
+COPY requirements-prod.txt ./
+
+# Create prod-only venv
+RUN python -m venv /app/.venv && \
+    /app/.venv/bin/pip install -r requirements-base.txt -r requirements-prod.txt
+
+# ========================
 # Runtime stage
 # ========================
 FROM gcr.io/distroless/python3:latest AS runtime
-
 WORKDIR /app
-
-# Non-root user
 USER nonroot:nonroot
 
-# Copy virtualenv and app from build stage
-COPY --from=build /app/.venv /app/.venv
+# Copy the prod-only venv and app
+COPY --from=prod-venv /app/.venv /app/.venv
 COPY --from=build /app/hello_world_project ./hello_world_project
 COPY --from=build /app/manage.py ./
 
-# Set PATH to the virtualenv
+# Set PATH to the venv
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
-
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
